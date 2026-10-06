@@ -3,7 +3,7 @@
 //
 //   node scripts/verify-binary.mjs [dist/bin/scan2doc-win-x64.exe]
 //
-// Needs the sample PDFs in .samples/mcp (written by the test suite's sample step).
+// The sample PDFs come from packages/cli/test/binary-samples.test.ts; `pnpm verify:bin` writes them first.
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const exe = process.argv[2] ?? join(root, 'dist/bin/scan2doc-win-x64.exe');
-const samples = join(root, '.samples/mcp');
+const samples = join(root, '.samples/bin');
 const pdfs = ['report-digital.pdf', 'report-scan.pdf', 'japanese.pdf', 'indonesian.pdf'];
 for (const f of [exe, ...pdfs.map((p) => join(samples, p))]) if (!existsSync(f)) throw new Error(`missing ${f}`);
 

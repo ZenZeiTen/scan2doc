@@ -2,6 +2,7 @@
   "name": "scan2doc",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Convert raw PDF scans into editable Office (.docx/.xlsx/.pptx) and OpenDocument (.odt/.ods/.odp) files.",
   "scripts": {
@@ -11,7 +12,7 @@
     "test:watch": "vitest",
     "verify:office": "vitest run packages/writer-opendocument/test/samples.test.ts && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-office.ps1",
     "build:bin": "node scripts/compile-binary.js",
-    "verify:bin": "node scripts/verify-binary.mjs"
+    "verify:bin": "vitest run packages/cli/test/binary-samples.test.ts && node scripts/verify-binary.mjs"
   },
   "packageManager": "pnpm@12.9.1+sha512.06b055fff5cd20dc12781de173ced3310ce0951bf2ec620211a16045d5444d5c93a663210764ef29a653a610459ba0368f0e74f84d80c54723cf95aae7bc0d6d",
   "devDependencies": {
