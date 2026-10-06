@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "declaration": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    // exFAT cannot hold the symlinks pnpm uses for workspace:* deps, so packages
+    // find each other here (built .d.ts, hence `pnpm build` builds core first).
+    // Vitest resolves the same names to sources via vitest.config.ts.
+    "paths": {
+      "@scan2doc/core": ["./packages/core/dist/index.d.ts"],
+      "@scan2doc/vision-wasm": ["./packages/vision-wasm/dist/index.d.ts"],
+      "@scan2doc/writer-openxml": ["./packages/writer-openxml/dist/index.d.ts"],
+      "@scan2doc/writer-opendocument": ["./packages/writer-opendocument/dist/index.d.ts"],
+      "@scan2doc/mcp": ["./packages/mcp/dist/index.d.ts"]
+    }
+  }
+}

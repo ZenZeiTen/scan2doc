@@ -1,0 +1,10 @@
+packages:
+  - "packages/*"
+
+# The repo lives on an exFAT volume, which supports neither symlinks, junctions
+# nor hardlinks: use a flat node_modules and copy files out of the store.
+# For the same reason packages do not declare workspace:* dependencies on each
+# other; see "paths" in tsconfig.base.json.
+nodeLinker: hoisted
+packageImportMethod: copy
+hoistWorkspacePackages: false

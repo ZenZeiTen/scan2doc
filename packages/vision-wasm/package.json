@@ -1,0 +1,54 @@
+{
+  "name": "@scan2doc/vision-wasm",
+  "version": "0.1.0",
+  "description": "Embedded WASM OCR and layout detection that emits IDR blocks. Implemented in Stage 3.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@hyzyla/pdfium": "^2.1.13",
+    "@tesseract.js-data/ces": "^1.0.0",
+    "@tesseract.js-data/chi_sim": "^1.0.0",
+    "@tesseract.js-data/chi_tra": "^1.0.0",
+    "@tesseract.js-data/dan": "^1.0.0",
+    "@tesseract.js-data/deu": "^1.0.0",
+    "@tesseract.js-data/ell": "^1.0.0",
+    "@tesseract.js-data/eng": "^1.0.0",
+    "@tesseract.js-data/fin": "^1.0.0",
+    "@tesseract.js-data/fra": "^1.0.0",
+    "@tesseract.js-data/hin": "^1.0.0",
+    "@tesseract.js-data/hun": "^1.0.0",
+    "@tesseract.js-data/ind": "^1.0.0",
+    "@tesseract.js-data/ita": "^1.0.0",
+    "@tesseract.js-data/jpn": "^1.0.0",
+    "@tesseract.js-data/kor": "^1.0.0",
+    "@tesseract.js-data/nld": "^1.0.0",
+    "@tesseract.js-data/nor": "^1.0.0",
+    "@tesseract.js-data/osd": "^1.0.0",
+    "@tesseract.js-data/pol": "^1.0.0",
+    "@tesseract.js-data/por": "^1.0.0",
+    "@tesseract.js-data/ron": "^1.0.0",
+    "@tesseract.js-data/rus": "^1.0.0",
+    "@tesseract.js-data/spa": "^1.0.0",
+    "@tesseract.js-data/swe": "^1.0.0",
+    "@tesseract.js-data/tha": "^1.0.0",
+    "@tesseract.js-data/tur": "^1.0.0",
+    "@tesseract.js-data/ukr": "^1.0.0",
+    "@tesseract.js-data/vie": "^1.0.0",
+    "fast-png": "^8.0.0",
+    "tesseract.js-core": "^6.1.2"
+  }
+}
