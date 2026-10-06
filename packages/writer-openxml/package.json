@@ -1,6 +1,6 @@
 {
   "name": "@scan2doc/writer-openxml",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "IDR to .docx / .xlsx / .pptx exporters. Implemented in Stage 2.",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,5 +1,10 @@
 export { AUTO_FORMAT, checkWritable, FORMATS, outputPath, parseFormats, parseLanguages, parsePages, UsageError, type OutputFormat } from './args.js';
 export { pagesNeedingReview, runConvert, writeFormat, type ConvertEvent, type ConvertOptions, type ConvertResult } from './convert.js';
-export { EXIT, main, program, type Io } from './main.js';
+export { EXIT, main, program, withDefaultCommand, type Io } from './main.js';
+export { freeStem, safeName, startApp, type App, type AppOptions, type JobView } from './app/server.js';
+export { DocumentStore, findInChars, type DocView, type SearchHit } from './app/docs.js';
+export { combine, everyN, rangeGroups, rebuild, split, type PageEdit } from './app/pdfops.js';
+export { makeSearchable } from './app/searchable.js';
+export { RecentFiles } from './app/recent.js';
 export { initialProgress, Progress, progressReducer, type ProgressState } from './ui.js';
 export { VERSION } from './version.js';

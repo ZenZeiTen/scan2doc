@@ -4,7 +4,7 @@
 //   node scripts/verify-binary.mjs [dist/bin/scan2doc-win-x64.exe]
 //
 // The sample PDFs come from packages/cli/test/binary-samples.test.ts; `pnpm verify:bin` writes them first.
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
@@ -76,6 +76,48 @@ check('refuses to overwrite without --force', again.status === 2 && /already exi
 
 const bad = run('convert', 'nope.pdf');
 check('missing input fails cleanly (exit 1)', bad.status === 1 && /nope\.pdf/.test(bad.stderr), bad.stderr.trim().slice(0, 120));
+
+// The app: started as a window would start it, but without opening one on this screen.
+const app = spawn(join(dir, basename(exe)), ['ui', '--no-open', '-o', join(dir, 'app-out')], { cwd: dir, env: { ...env, APPDATA: join(dir, 'appdata') } });
+let said = '';
+app.stderr.on('data', (d) => (said += d));
+const address = await new Promise((resolve) => {
+  const timer = setTimeout(() => resolve(null), 60_000);
+  const look = () => {
+    const m = /running at (http:\/\/127\.0\.0\.1:\d+\/\?t=\S+)/.exec(said);
+    if (m) {
+      clearTimeout(timer);
+      resolve(m[1]);
+    } else setTimeout(look, 200);
+  };
+  look();
+});
+check('the app starts and prints its address', !!address, address ? '' : said.slice(0, 200));
+if (address) {
+  const token = new URL(address).searchParams.get('t');
+  const at = (path) => new URL(`${path}${path.includes('?') ? '&' : '?'}t=${token}`, address);
+  const page = await fetch(address);
+  check('the app page loads', page.status === 200 && (await page.text()).includes('<title>Scan2Doc</title>'));
+  check('requests without the token are refused', (await fetch(new URL('/api/state', address))).status === 403);
+  const opened = await fetch(at('/api/open'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ path: join(dir, 'report-digital.pdf') }) });
+  const { id } = await opened.json();
+  const image = await fetch(at(`/api/docs/${id}/page/0?w=400`));
+  const jpg = Buffer.from(await image.arrayBuffer());
+  check('it opens a PDF and renders a page', image.status === 200 && jpg[0] === 0xff && jpg[1] === 0xd8, `${jpg.length} bytes`);
+  const hits = (await (await fetch(at(`/api/docs/${id}/search?q=northern`))).json()).hits ?? [];
+  check('it searches the PDF', hits.length === 1);
+  await fetch(at('/api/quit'), { method: 'POST' });
+}
+const exited = await new Promise((resolve) => {
+  if (app.exitCode !== null) return resolve(true);
+  const timer = setTimeout(() => resolve(false), 15_000);
+  app.on('exit', () => {
+    clearTimeout(timer);
+    resolve(true);
+  });
+});
+check('the app exits when asked to quit', exited);
+if (!exited) app.kill();
 
 rmSync(dir, { recursive: true, force: true });
 console.log(failures ? `\n${failures} check(s) failed` : '\nAll binary checks passed');

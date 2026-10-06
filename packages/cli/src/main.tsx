@@ -1,8 +1,15 @@
+import { homedir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { render } from 'ink';
 import { LANGUAGES } from '@scan2doc/core';
 import { parseFormats, parseLanguages, parsePages, UsageError } from './args.js';
 import { pagesNeedingReview, runConvert, type ConvertEvent, type ConvertResult } from './convert.js';
+import { platformDialogs } from './app/dialogs.js';
+import { forgetInstance, rememberInstance, runningInstance } from './app/instance.js';
+import { RecentFiles } from './app/recent.js';
+import { startApp } from './app/server.js';
+import { hideOwnConsole, openAppWindow, revealInFileManager } from './app/window.js';
 import { initialProgress, Progress, progressReducer } from './ui.js';
 import { VERSION } from './version.js';
 
@@ -118,6 +125,46 @@ export function program(io: Io): Command {
     });
 
   cli
+    .command('ui')
+    .description('open the Scan2Doc app window (what double-clicking scan2doc does)')
+    .option('-o, --out <dir>', 'where files go for documents with no folder of their own', join(homedir(), 'Documents', 'Scan2Doc'))
+    .option('--port <n>', 'port on 127.0.0.1 (default: any free one)', '0')
+    .option('--no-open', 'do not open a window; just print the address')
+    .option('--stay', 'keep running after the window is closed')
+    .addOption(new Option('--launched').hideHelp())
+    .action(async (flags: { out: string; port: string; open: boolean; stay?: boolean; launched?: boolean }) => {
+      const port = Number(flags.port);
+      if (!Number.isInteger(port) || port < 0 || port > 65535) throw new UsageError('--port must be a whole number from 0 to 65535');
+      const profile = join(process.env.LOCALAPPDATA ?? join(homedir(), '.cache'), 'Scan2Doc', 'Window');
+      // A second double-click opens another window onto the app already running.
+      const running = flags.open && port === 0 ? await runningInstance() : null;
+      if (running) {
+        openAppWindow(running, profile);
+        io.stderr.write(`Scan2Doc is already running; opened another window.\n`);
+        return;
+      }
+      if (flags.launched) hideOwnConsole();
+      const app = await startApp({
+        outDir: resolve(flags.out),
+        port,
+        dialogs: platformDialogs(),
+        recent: new RecentFiles(),
+        reveal: revealInFileManager,
+        ...(!flags.stay && flags.open && { idleQuitMs: 12_000 }),
+        onQuit: () => {
+          io.stderr.write('Scan2Doc stopped.\n');
+          forgetInstance(app.url);
+          void app.close();
+        },
+      });
+      rememberInstance(app.url);
+      io.stderr.write(`Scan2Doc is running at ${app.url}\nClose its window to stop it.\n`);
+      if (flags.open) openAppWindow(app.url, profile);
+      // Like mcp: the process lives as long as the server does.
+      cli.setOptionValue('serving', true);
+    });
+
+  cli
     .command('languages')
     .description('list the languages scan2doc can read')
     .action(() => {
@@ -144,10 +191,13 @@ export function program(io: Io): Command {
 }
 
 /** Runs the CLI; resolves to the exit code (or undefined for the long-running mcp server). */
+/** No arguments is what a double-click gives: open the app rather than print help into a window that closes. */
+export const withDefaultCommand = (argv: readonly string[]): string[] => (argv.length === 0 ? ['ui', '--launched'] : [...argv]);
+
 export async function main(argv: readonly string[], io: Io): Promise<number | undefined> {
   const cli = program(io);
   try {
-    await cli.parseAsync([...argv], { from: 'user' });
+    await cli.parseAsync(withDefaultCommand(argv), { from: 'user' });
     if (cli.getOptionValue('serving')) return undefined;
     return (cli.getOptionValue('exitCode') as number | undefined) ?? EXIT.OK;
   } catch (err) {

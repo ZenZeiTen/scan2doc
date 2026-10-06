@@ -1,6 +1,6 @@
 // Builds the standalone scan2doc executables: no Node, Python or Tesseract needed on the target.
 //
-//   node scripts/compile-binary.js [--targets win-x64,linux-x64] [--languages all|eng,ind,...] [--allow-download]
+//   node scripts/compile-binary.js [--targets win-x64,linux-x64] [--languages all|eng,ind,...] [--allow-download] [--bundle-only]
 //
 // 1. esbuild bundles the CLI and every dependency into dist/bundle.mjs.
 // 2. The bundle, PDFium, both Tesseract builds and the language models become
@@ -103,6 +103,8 @@ const bundled = await build({
 });
 const bundle = readFileSync(join(dist, 'bundle.mjs'));
 console.log(`  bundle.mjs ${mb(bundle.length)}`);
+// --bundle-only: just dist/bundle.mjs, which `node dist/bundle.mjs ui` runs from the repo (assets from node_modules).
+if (flag('bundle-only')) process.exit(0);
 
 // ---------- 2. assets ----------
 step(`collecting assets (${languages.length} language${languages.length === 1 ? '' : 's'})`);

@@ -29,6 +29,8 @@ interface PdfiumModule {
   wasmExports: { malloc(n: number): number; free(p: number): void };
   _FPDF_LoadPage(doc: number, index: number): number;
   _FPDF_ClosePage(page: number): void;
+  _FPDF_GetPageWidth(page: number): number;
+  _FPDF_GetPageHeight(page: number): number;
   _FPDFPage_GetRotation(page: number): number;
   _FPDF_PageToDevice(page: number, sx: number, sy: number, w: number, h: number, rot: number, px: number, py: number, dx: number, dy: number): number;
   _FPDF_GetMetaText(doc: number, tag: number, buf: number, len: number): number;
@@ -101,8 +103,11 @@ export function readTextLayer(module: PdfiumModule, doc: number, pageIndex: numb
   try {
     if (!text) return [];
     const rotation = module._FPDFPage_GetRotation(page);
+    // PageToDevice already applies the page's /Rotate; its rotate argument is an extra turn on
+    // top (as in FPDF_RenderPageBitmap), so 0 matches the render. Passing /Rotate here turned
+    // rotated pages twice and put their text off the ink.
     const toDevice = (x: number, y: number) => {
-      module._FPDF_PageToDevice(page, 0, 0, width, height, rotation, x, y, scratch + 32, scratch + 36);
+      module._FPDF_PageToDevice(page, 0, 0, width, height, 0, x, y, scratch + 32, scratch + 36);
       return [module.HEAP32[(scratch + 32) >> 2]!, module.HEAP32[(scratch + 36) >> 2]!] as const;
     };
     const count = module._FPDFText_CountChars(text);
@@ -158,7 +163,8 @@ export function readTextLayer(module: PdfiumModule, doc: number, pageIndex: numb
         invisible: obj !== 0 && module._FPDFTextObj_GetTextRenderMode(obj) === TEXT_RENDER_INVISIBLE,
         // Private-use code points are glyph ids leaking through a font with no Unicode map.
         unmapped: module._FPDFText_HasUnicodeMapError(text, i) === 1 || (code >= 0xe000 && code <= 0xf8ff),
-        angle: module._FPDFText_GetCharAngle(text, i),
+        // As displayed: the angle within the page plus the page's own /Rotate (quarter turns, clockwise).
+        angle: module._FPDFText_GetCharAngle(text, i) + (rotation * Math.PI) / 2,
         spaceBefore,
       });
     }
@@ -172,6 +178,17 @@ export function readTextLayer(module: PdfiumModule, doc: number, pageIndex: numb
 }
 
 /** Document Info entries ("Title", "Author", …); undefined when absent or empty. */
+/** A page's size in points, as displayed (after its /Rotate), without rendering it. */
+export function readPageSize(module: PdfiumModule, doc: number, pageIndex: number): { widthPt: number; heightPt: number } {
+  const page = module._FPDF_LoadPage(doc, pageIndex);
+  if (!page) throw new Error(`page ${pageIndex + 1} could not be loaded`);
+  try {
+    return { widthPt: module._FPDF_GetPageWidth(page), heightPt: module._FPDF_GetPageHeight(page) };
+  } finally {
+    module._FPDF_ClosePage(page);
+  }
+}
+
 export function readMetaText(module: PdfiumModule, doc: number, tag: string): string | undefined {
   const key = new TextEncoder().encode(`${tag}\0`);
   const m = module.wasmExports;

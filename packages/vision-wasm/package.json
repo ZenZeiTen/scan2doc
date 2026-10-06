@@ -1,6 +1,6 @@
 {
   "name": "@scan2doc/vision-wasm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Embedded WASM OCR and layout detection that emits IDR blocks. Implemented in Stage 3.",
   "type": "module",
   "main": "./dist/index.js",

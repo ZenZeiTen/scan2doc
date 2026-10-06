@@ -1,7 +1,7 @@
 import { PDFiumLibrary } from '@hyzyla/pdfium';
 import type { AssetSource } from './assets.js';
 import { bgraToGray, type GrayImage } from './image.js';
-import { readMetaText, readTextLayer, type PdfChar, type PdfiumModule } from './textlayer.js';
+import { readMetaText, readPageSize, readTextLayer, type PdfChar, type PdfiumModule } from './textlayer.js';
 
 export interface RasterPage {
   index: number;
@@ -51,6 +51,12 @@ export class PdfRasterizer {
   textLayer(index: number, width: number, height: number): PdfChar[] {
     const { module, doc } = this.native;
     return readTextLayer(module, doc, index, width, height);
+  }
+
+  /** A page's displayed size in points, without rendering it. */
+  pageSize(index: number): { widthPt: number; heightPt: number } {
+    const { module, doc } = this.native;
+    return readPageSize(module, doc, index);
   }
 
   /** Title and author from the PDF's document information, when set. */

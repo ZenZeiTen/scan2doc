@@ -21,7 +21,27 @@ executable with the engines and all language models built in, and needs no Node.
 code-signed, so Windows SmartScreen may warn the first time. Check the SHA-256 in the release
 notes.
 
-## Usage
+## The app
+
+Double-click `scan2doc-win-x64.exe` to open Scan2Doc in its own window. It uses Microsoft Edge's
+app mode: no address bar, nothing sent anywhere. Closing the window stops it.
+
+- **Tabs:** Home (open files, drop zone, recent files and tasks), Tools, and one tab per open
+  PDF.
+- **Viewer:** page thumbnails, zoom, page navigation, and search with highlighted matches.
+- **Export PDF:** to Word, Excel, PowerPoint or OpenDocument, next to the PDF by default, never
+  over an existing file.
+- **Scan & OCR:** recognises scanned text and lays it invisibly under the page images, so the PDF
+  can be searched and copied from.
+- **Organize Pages:** reorder (drag), rotate, delete and extract pages.
+- **Combine Files**, **Split PDF** (by page count or ranges), and **Export Images** (PNG or JPG).
+- **Save and Save As** use the Windows dialogs. Shortcuts: Ctrl+O, Ctrl+S, Ctrl+Shift+S, Ctrl+F,
+  Ctrl+W, Ctrl+= / Ctrl+-.
+
+`scan2doc ui` starts the same app from a terminal. Add `--no-open` to print its private address
+instead of opening a window.
+
+## Command line
 
 ```
 scan2doc convert report.pdf                     # format picked by document type

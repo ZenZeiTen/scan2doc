@@ -1,6 +1,6 @@
 {
   "name": "@scan2doc/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Intermediate Document Representation (IDR) schemas, spatial reading-order sorter and document classifier.",
   "type": "module",
   "main": "./dist/index.js",
