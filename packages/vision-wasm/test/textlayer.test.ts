@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { IDRBlock } from '@scan2doc/core';
 import { buildLines, buildParagraphs, familyFromFontName, judgeTextLayer, languageFromText, recognizePdf, type PdfChar } from '../src/index.js';
-import { makeBoldHeadingPdf, makeHiddenLayerPdf, makeMixedPdf } from '../../../test/support/make-pdf.js';
+import { makeBoldHeadingPdf, makeHiddenLayerPdf, makeMixedPdf, makeSparseScanPdf, makeTightJustifiedPdf, TIGHT_LINES } from '../../../test/support/make-pdf.js';
 
 const DPI = 300;
 const PT = DPI / 72;
@@ -132,6 +132,23 @@ describe('text layer in whole documents', () => {
     const t = text(pages[0]!.blocks);
     expect(t).toContain('Cover note');
     expect(t).toContain('Quarterly Report');
+  });
+
+  it('OCRs a digital page whose scanned stamps are too thin to count as pictures', async () => {
+    const { pages, reports } = await recognizePdf(await makeSparseScanPdf());
+    // Caught by ink coverage, not by the picture check: no strip is a picture region.
+    expect(reports[0]!.textNote).toMatch(/covers only part of the page \(\d+% of the ink is outside it\)/);
+    expect(reports[0]!.textSource).toBe('ocr');
+    expect(pages[0]!.blocks.filter((b) => b.type === 'image')).toEqual([]);
+    const t = text(pages[0]!.blocks);
+    expect(t).toContain('Cover note for the attached statement.');
+    expect(t).toContain('APPROVED FOR PAYMENT');
+  });
+
+  it('keeps word spaces in tightly justified text, where the gaps alone are too narrow to show them', async () => {
+    const { pages, reports } = await recognizePdf(await makeTightJustifiedPdf());
+    expect(reports[0]!.textSource).toBe('pdf');
+    expect(text(pages[0]!.blocks)).toBe(TIGHT_LINES.join(' '));
   });
 
   it('turns a bold line at body size into a heading (weight is known only from the text layer)', async () => {

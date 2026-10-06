@@ -1,5 +1,5 @@
 import jpeg from 'jpeg-js';
-import { PDFDocument, rgb, setTextRenderingMode, StandardFonts, TextRenderingMode, type PDFFont, type PDFPage } from 'pdf-lib';
+import { PDFDocument, rgb, setTextRenderingMode, setWordSpacing, StandardFonts, TextRenderingMode, type PDFFont, type PDFPage } from 'pdf-lib';
 import { nodeModulesAssets, PdfRasterizer } from '@scan2doc/vision-wasm';
 
 export const A4 = { width: 595, height: 842 } as const;
@@ -155,6 +155,68 @@ export async function makeMixedPdf(): Promise<Uint8Array> {
   page.drawImage(img, { x: 50, y: 30, width: A4.width - 100, height: (A4.width - 100) * (A4.height / A4.width) * 0.92 });
   return pdf.save();
 }
+
+/** One line of text as a JPEG strip, rendered and scanned on its own (no surrounding page). */
+async function scannedStrip(text: string, sizePt: number, dpi = 200): Promise<{ jpg: Uint8Array; widthPt: number; heightPt: number }> {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const widthPt = font.widthOfTextAtSize(text, sizePt) + 8;
+  const heightPt = sizePt * 1.6;
+  doc.addPage([widthPt, heightPt]).drawText(text, { x: 4, y: sizePt * 0.45, size: sizePt, font });
+  const raster = await PdfRasterizer.open(await doc.save(), nodeModulesAssets());
+  try {
+    const page = await raster.render(0, dpi);
+    const rgba = new Uint8Array(page.width * page.height * 4);
+    for (let p = 0; p < page.gray.data.length; p++) rgba.fill(page.gray.data[p]!, p * 4, p * 4 + 3), (rgba[p * 4 + 3] = 255);
+    return { jpg: jpeg.encode({ width: page.width, height: page.height, data: rgba }, 85).data, widthPt, heightPt };
+  } finally {
+    raster.close();
+  }
+}
+
+/**
+ * A digital note with typed stamps scanned in as single-line strips. Each strip
+ * is too thin to count as a picture (under 0.4 in), so only the ink-coverage
+ * check can tell that most of the page's text is not in the text layer.
+ */
+export async function makeSparseScanPdf(): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const page = pdf.addPage([A4.width, A4.height]);
+  page.drawText('Cover note for the attached statement.', { x: 60, y: 780, size: 12, font });
+  const stamps = [
+    'RECEIVED BY THE FINANCE DEPARTMENT ON 6 OCTOBER 2026',
+    'APPROVED FOR PAYMENT AFTER REVIEW BY THE CONTROLLER',
+    'POSTED TO THE GENERAL LEDGER UNDER ACCOUNT 4100',
+  ];
+  for (const [i, line] of stamps.entries()) {
+    const strip = await scannedStrip(line, 16);
+    const img = await pdf.embedJpg(strip.jpg);
+    page.drawImage(img, { x: 50, y: 640 - i * 160, width: strip.widthPt, height: strip.heightPt });
+  }
+  return pdf.save();
+}
+
+/**
+ * Tightly justified text: real space characters, but negative word spacing
+ * closes the gaps to ~0.08 em, so measuring gaps alone runs words together.
+ */
+export async function makeTightJustifiedPdf(): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const page = pdf.addPage([A4.width, A4.height]);
+  const size = 12;
+  // Helvetica's space is 0.278 em; cancelling 0.2 em of it leaves a 0.078 em gap.
+  page.pushOperators(setWordSpacing(-0.2 * size));
+  TIGHT_LINES.forEach((line, i) => page.drawText(line, { x: 60, y: 760 - i * 16, size, font }));
+  page.pushOperators(setWordSpacing(0));
+  return pdf.save();
+}
+
+export const TIGHT_LINES = [
+  'Tightly justified columns squeeze the space between words',
+  'until the gaps are narrower than the space inside some letters.',
+] as const;
 
 /** A digital page whose section headings are bold at body size: only weight marks them. */
 export async function makeBoldHeadingPdf(): Promise<Uint8Array> {
