@@ -158,9 +158,11 @@ import(pathToFileURL(file).href).catch((err) => { console.error(err && err.stack
 
 // ---------- 4. blob ----------
 step(`building the SEA blob with Node ${NODE_VERSION}`);
+// Paths relative to dist/ (the blob is built there): Node stores the main script's path in the
+// executable, and an absolute one would publish the build machine's folders and user name.
 const seaConfig = {
-  main: join(dist, 'sea-boot.cjs'),
-  output: join(dist, 'sea-prep.blob'),
+  main: 'sea-boot.cjs',
+  output: 'sea-prep.blob',
   disableExperimentalSEAWarning: true,
   useSnapshot: false,
   // Without a V8 code cache the blob is the same for every platform of this Node version.
@@ -168,8 +170,8 @@ const seaConfig = {
   assets,
 };
 writeFileSync(join(dist, 'sea-config.json'), JSON.stringify(seaConfig, null, 2));
-execFileSync(process.execPath, ['--experimental-sea-config', join(dist, 'sea-config.json')], { stdio: 'inherit' });
-const blob = readFileSync(seaConfig.output);
+execFileSync(process.execPath, ['--experimental-sea-config', 'sea-config.json'], { stdio: 'inherit', cwd: dist });
+const blob = readFileSync(join(dist, seaConfig.output));
 
 // ---------- 5. targets ----------
 const cacheDir = join(process.env.LOCALAPPDATA || process.env.XDG_CACHE_HOME || join(homedir(), '.cache'), 'scan2doc-build', `node-v${NODE_VERSION}`);

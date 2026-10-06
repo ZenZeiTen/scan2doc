@@ -6,7 +6,7 @@
 // The sample PDFs come from packages/cli/test/binary-samples.test.ts; `pnpm verify:bin` writes them first.
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,6 +34,10 @@ const check = (what, ok, detail = '') => {
 };
 
 console.log(`Verifying ${exe} in ${dir} (PATH: ${env.PATH})`);
+// A published executable must not carry the build machine's folders (they name its user).
+const bytes = readFileSync(exe);
+const leaks = [root.replace(/[\\/]+$/, ''), homedir()].filter((p) => bytes.includes(Buffer.from(p, 'latin1')));
+check('no build-machine paths inside the executable', leaks.length === 0, leaks.join(', '));
 const where = spawnSync('where', ['node'], { env, encoding: 'utf8', shell: true });
 check('node.exe is not reachable on PATH', where.status !== 0);
 
