@@ -1,4 +1,5 @@
-/** Entry point for `scan2doc convert <input.pdf>`. Stage 4. */
-export async function main(_argv: string[] = process.argv): Promise<number> {
-  throw new Error('@scan2doc/cli: the convert command is not implemented yet (Stage 4)');
-}
+export { AUTO_FORMAT, checkWritable, FORMATS, outputPath, parseFormats, parseLanguages, parsePages, UsageError, type OutputFormat } from './args.js';
+export { pagesNeedingReview, runConvert, writeFormat, type ConvertEvent, type ConvertOptions, type ConvertResult } from './convert.js';
+export { EXIT, main, program, type Io } from './main.js';
+export { initialProgress, Progress, progressReducer, type ProgressState } from './ui.js';
+export { VERSION } from './version.js';

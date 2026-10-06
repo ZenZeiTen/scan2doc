@@ -178,6 +178,14 @@ describe('text layer option', () => {
     expect(ocr.text).toMatch(/OCR confidence \d+/);
     await close();
   });
+
+  it('keeps job page numbers for get_page and names the PDF page beside them', async () => {
+    const { call, close } = await connect();
+    const res = await call('scan_document', { path: 'report.pdf', pages: [2] });
+    expect(res.structuredContent!.pages).toEqual([expect.objectContaining({ page: 1, pdfPage: 2 })]);
+    expect(res.text).toMatch(/- page 1 \(PDF page 2\): /);
+    await close();
+  });
 });
 
 describe('file access', () => {

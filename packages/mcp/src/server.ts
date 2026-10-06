@@ -8,7 +8,7 @@ import {
   downscaleGray,
   ESCALATION_IMAGE_MAX_SIDE,
   grayToPng,
-  nodeModulesAssets,
+  defaultAssets,
   PdfRasterizer,
   rotateRaster,
   scanToIdr,
@@ -55,7 +55,8 @@ function summarize(job: Job): string {
     const issues = r.quality.issues.map((i) => i.code).join(', ') || 'none';
     const conf = Number.isNaN(r.quality.wordConfidence) ? 'n/a' : r.quality.wordConfidence.toFixed(0);
     const source = r.textSource === 'pdf' ? 'text from the PDF itself' : `OCR confidence ${conf}`;
-    return `- page ${r.index + 1}: ${p.language ?? '?'} (${r.languages})${r.rotation ? `, turned ${r.rotation}°` : ''}, ${source}${r.textNote ? ` [${r.textNote}]` : ''}, issues: ${issues}, escalation: ${r.escalation}${r.note ? ` (${r.note})` : ''}`;
+    const pdfPage = r.sourcePage !== r.index ? ` (PDF page ${r.sourcePage + 1})` : '';
+    return `- page ${r.index + 1}${pdfPage}: ${p.language ?? '?'} (${r.languages})${r.rotation ? `, turned ${r.rotation}°` : ''}, ${source}${r.textNote ? ` [${r.textNote}]` : ''}, issues: ${issues}, escalation: ${r.escalation}${r.note ? ` (${r.note})` : ''}`;
   });
   const review = job.reports.filter((r) => NEEDS_REVIEW.has(r.escalation)).map((r) => r.index + 1);
   return [
@@ -75,7 +76,7 @@ function summarize(job: Job): string {
  */
 export function createScan2DocServer(options: ServerOptions): McpServer {
   const roots = new Roots(options.roots);
-  const assets = options.assets ?? nodeModulesAssets();
+  const assets = options.assets ?? defaultAssets();
   const jobs = new Map<string, Job>();
   const server = new McpServer(
     { name: 'scan2doc', version: '0.1.0' },
@@ -166,6 +167,7 @@ export function createScan2DocServer(options: ServerOptions): McpServer {
             jobId: job.id,
             pages: reports.map((r) => ({
               page: r.index + 1,
+              pdfPage: r.sourcePage + 1,
               language: job.document.pages[r.index]!.language ?? null,
               rotation: r.rotation,
               wordConfidence: Number.isNaN(r.quality.wordConfidence) ? null : r.quality.wordConfidence,

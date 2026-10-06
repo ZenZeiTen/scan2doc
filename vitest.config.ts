@@ -12,6 +12,7 @@ export default defineConfig({
       '@scan2doc/writer-openxml': src('writer-openxml'),
       '@scan2doc/writer-opendocument': src('writer-opendocument'),
       '@scan2doc/mcp': src('mcp'),
+      '@scan2doc/cli': src('cli'),
     },
   },
   test: {

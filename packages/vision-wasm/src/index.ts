@@ -1,4 +1,4 @@
-export { nodeModulesAssets, type AssetName, type AssetSource, type ModelSet } from './assets.js';
+export { defaultAssets, nodeModulesAssets, seaAssets, type AssetName, type AssetSource, type ModelSet } from './assets.js';
 export { ESCALATION_IMAGE_MAX_SIDE, type EscalationOutcome, type EscalationReply, type EscalationRequest, type PageEscalator } from './escalation.js';
 export {
   bgraToGray,

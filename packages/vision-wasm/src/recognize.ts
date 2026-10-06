@@ -12,7 +12,7 @@ import {
   type IDRPage,
   type IDRTableBlock,
 } from '@scan2doc/core';
-import { nodeModulesAssets, type AssetSource } from './assets.js';
+import { defaultAssets, type AssetSource } from './assets.js';
 import { ESCALATION_IMAGE_MAX_SIDE, type EscalationOutcome, type EscalationRequest, type PageEscalator } from './escalation.js';
 import { bgraToGray, cropToPng, despeckle, downscaleGray, eraseBoxes, grayToPng, inkMask, pngDataUri, rotateRaster, type GrayImage, type Rotation } from './image.js';
 import { identifyLatin, SCRIPT_CANDIDATES, scriptFromOsd } from './languages.js';
@@ -31,8 +31,10 @@ export type RecognizeStage = 'render' | 'layout' | 'ocr' | 'tables' | 'escalate'
 
 export interface RecognizeProgress {
   stage: RecognizeStage;
-  /** 0-based page being processed. */
+  /** 0-based position of the page among those being converted. */
   page: number;
+  /** 0-based page number in the PDF (differs from page when only some pages are converted). */
+  sourcePage: number;
   pageCount: number;
 }
 
@@ -61,7 +63,10 @@ export interface RecognizeOptions {
 }
 
 export interface PageReport {
+  /** 0-based position of the page in the output document. */
   index: number;
+  /** 0-based page number in the PDF it came from. */
+  sourcePage: number;
   /** Tesseract language set used, e.g. "jpn+eng". */
   languages: string;
   /** Script reported by OSD, when it could tell. */
@@ -232,7 +237,7 @@ interface PageDraft {
  */
 export async function recognizePdf(pdf: Uint8Array, options: RecognizeOptions = {}): Promise<RecognizeResult> {
   const dpi = options.dpi ?? 300;
-  const assets = options.assets ?? nodeModulesAssets();
+  const assets = options.assets ?? defaultAssets();
   const auto = !options.languages || options.languages === 'auto';
   if (!auto) {
     // Fail before any work when a requested model is missing, not only on the first page that needs OCR.
@@ -246,7 +251,7 @@ export async function recognizePdf(pdf: Uint8Array, options: RecognizeOptions = 
   const getOsd = async () => (auto || options.detectOrientation !== false ? (osd ??= await OsdEngine.create(assets)) : undefined);
   try {
     const indices = options.pages ?? Array.from({ length: raster.pageCount }, (_, i) => i);
-    const report = (stage: RecognizeStage, page: number) => options.onProgress?.({ stage, page, pageCount: indices.length });
+    const report = (stage: RecognizeStage, page: number) => options.onProgress?.({ stage, page, sourcePage: indices[page]!, pageCount: indices.length });
     const drafts: PageDraft[] = [];
 
     for (const [n, index] of indices.entries()) {
@@ -433,6 +438,7 @@ export async function recognizePdf(pdf: Uint8Array, options: RecognizeOptions = 
       pages.push(page);
       reports.push({
         index: n,
+        sourcePage: indices[n]!,
         languages: d.languages,
         ...(d.script && { script: d.script }),
         rotation: d.rotation,

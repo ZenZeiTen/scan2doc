@@ -28,6 +28,48 @@ export type ModelSet = 'best_int' | 'standard';
 
 const require = createRequire(import.meta.url);
 
+interface SeaModule {
+  isSea(): boolean;
+  getAsset(key: string): ArrayBuffer;
+}
+
+/**
+ * Reads the engine's binaries from a Node single-executable application's
+ * embedded assets (see scripts/compile-binary.js). Language models are stored
+ * gzipped. Undefined outside a single executable.
+ */
+export function seaAssets(): AssetSource | undefined {
+  let sea: SeaModule;
+  try {
+    sea = require('node:sea') as SeaModule;
+  } catch {
+    return undefined;
+  }
+  if (!sea.isSea()) return undefined;
+  const get = (key: string): Uint8Array | undefined => {
+    try {
+      return new Uint8Array(sea.getAsset(key));
+    } catch {
+      return undefined;
+    }
+  };
+  return {
+    async read(name) {
+      if (name.endsWith('.traineddata')) {
+        const gz = get(`${name}.gz`);
+        if (!gz) throw new Error(`no model installed for language "${name.slice(0, -'.traineddata'.length)}"`);
+        return gunzipSync(gz);
+      }
+      const bytes = get(name);
+      if (!bytes) throw new Error(`asset ${name} is missing from this build`);
+      return bytes;
+    },
+  };
+}
+
+/** The assets of this build: embedded ones in the single executable, node_modules otherwise. */
+export const defaultAssets = (): AssetSource => seaAssets() ?? nodeModulesAssets();
+
 /** Reads the engine's binaries from the installed npm packages. */
 export function nodeModulesAssets(models: ModelSet = 'best_int'): AssetSource {
   return {

@@ -6,20 +6,24 @@
   "description": "Convert raw PDF scans into editable Office (.docx/.xlsx/.pptx) and OpenDocument (.odt/.ods/.odp) files.",
   "scripts": {
     "build": "tsc -p packages/core && tsc -p packages/vision-wasm && tsc -p packages/writer-openxml && tsc -p packages/writer-opendocument && tsc -p packages/mcp && tsc -p packages/cli",
-    "typecheck": "tsc -p packages/core && tsc -p packages/vision-wasm && tsc -p packages/writer-openxml && tsc -p packages/writer-opendocument && tsc -p packages/mcp --noEmit && tsc -p packages/cli --noEmit",
+    "typecheck": "tsc -p packages/core && tsc -p packages/vision-wasm && tsc -p packages/writer-openxml && tsc -p packages/writer-opendocument && tsc -p packages/mcp && tsc -p packages/cli --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify:office": "vitest run packages/writer-opendocument/test/samples.test.ts && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-office.ps1"
+    "verify:office": "vitest run packages/writer-opendocument/test/samples.test.ts && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-office.ps1",
+    "build:bin": "node scripts/compile-binary.js",
+    "verify:bin": "node scripts/verify-binary.mjs"
   },
   "packageManager": "pnpm@12.9.1+sha512.06b055fff5cd20dc12781de173ced3310ce0951bf2ec620211a16045d5444d5c93a663210764ef29a653a610459ba0368f0e74f84d80c54723cf95aae7bc0d6d",
   "devDependencies": {
     "@pdf-lib/fontkit": "^1.1.1",
     "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
     "@xmldom/xmldom": "^0.9.12",
     "esbuild": "^0.28.2",
     "jpeg-js": "^0.4.4",
     "jszip": "^3.10.2",
     "pdf-lib": "^1.17.1",
+    "postject": "1.0.0-alpha.6",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
   }

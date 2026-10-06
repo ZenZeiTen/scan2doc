@@ -1,7 +1,7 @@
 {
   "name": "@scan2doc/cli",
   "version": "0.1.0",
-  "description": "scan2doc command line (Commander.js + React Ink). Implemented in Stage 4.",
+  "description": "scan2doc command line: `scan2doc convert <input.pdf>` with a live progress display (Commander.js + React Ink).",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,5 +17,14 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "ink": "^8.0.0",
+    "react": "^19.3.0",
+    "@modelcontextprotocol/sdk": "^1.32.0"
+  },
+  "bin": {
+    "scan2doc": "./dist/bin.js"
   }
 }
