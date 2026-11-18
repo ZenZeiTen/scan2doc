@@ -1,3 +1,6 @@
+> **This repository has moved.** It now lives in [ZenZeiTen/synthapps](https://github.com/ZenZeiTen/synthapps) at [`scan2doc/`](https://github.com/ZenZeiTen/synthapps/tree/main/scan2doc), with its full history.
+> This copy is archived: it stays here for its issues, pull requests and releases (the releases made so far, including the Windows download below, stay here), and it is no longer updated. Please open new issues and pull requests in synthapps.
+
 # Scan2Doc
 
 Converts PDF scans into editable Microsoft Office (.docx, .xlsx, .pptx) and OpenDocument
